@@ -47,8 +47,8 @@ pluginBundle {
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation "com.android.tools.build:gradle:3.3.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
     compileOnly "javax.inject:javax.inject:1"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.0"
