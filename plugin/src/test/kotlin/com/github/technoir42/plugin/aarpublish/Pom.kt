@@ -15,5 +15,5 @@ data class PomDependency(
     var groupId: String? = null,
     var artifactId: String? = null,
     var version: String? = null,
-    var scope: String = "compile"
+    var scope: String? = null
 )

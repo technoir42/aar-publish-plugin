@@ -2,6 +2,7 @@ package com.github.technoir42.plugin.aarpublish
 
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.jupiter.api.Assertions.*
@@ -127,17 +128,10 @@ class AarPublishPluginTest {
         assertEquals(artifactId, project.artifactId)
         assertEquals(version, project.version)
         assertEquals("aar", project.packaging)
-        assertEquals(
-            listOf(
-                PomDependency(groupId = "commons-io", artifactId = "commons-io", version = "2.6"),
-                PomDependency(
-                    groupId = "org.apache.commons",
-                    artifactId = "commons-lang3",
-                    version = "3.8",
-                    scope = "runtime"
-                )
-            ),
-            project.dependencies
+        assertThat(project.dependencies).containsExactlyInAnyOrder(
+            PomDependency(groupId = "org.apache.commons", artifactId = "commons-collections4", version = "4.3", scope = "compile"),
+            PomDependency(groupId = "commons-io", artifactId = "commons-io", version = "2.6", scope = "runtime"),
+            PomDependency(groupId = "org.apache.commons", artifactId = "commons-lang3", version = "3.8", scope = "runtime")
         )
     }
 

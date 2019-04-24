@@ -86,6 +86,8 @@ class TestProjectGenerator(
             }
 
             dependencies {
+                compileOnly "commons-codec:commons-codec:1.12"
+                api "org.apache.commons:commons-collections4:4.3"
                 implementation "commons-io:commons-io:2.6"
                 runtimeOnly "org.apache.commons:commons-lang3:3.8"
             }

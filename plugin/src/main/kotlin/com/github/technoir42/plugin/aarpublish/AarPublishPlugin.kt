@@ -5,10 +5,13 @@ import com.android.build.gradle.api.AndroidSourceSet
 import com.android.build.gradle.api.LibraryVariant
 import com.android.build.gradle.api.SourceKind
 import com.android.utils.appendCapitalized
+import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ConfigurationVariant
 import org.gradle.api.component.AdhocComponentWithVariants
+import org.gradle.api.component.ConfigurationVariantDetails
 import org.gradle.api.component.SoftwareComponentFactory
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.jvm.tasks.Jar
@@ -36,11 +39,13 @@ class AarPublishPlugin @Inject constructor(
             val archives = createArchivesConfigurationForVariant(project, variant, libraryExtension, aarPublishingExtension)
 
             val component = softwareComponentFactory.adhoc("android".appendCapitalized(variant.name))
-            component.setupFromConfigurations(archives, variant.compileConfiguration, variant.runtimeConfiguration)
+            val apiElements = project.configurations.getByName("${variant.name}ApiElements")
+            val runtimeElements = project.configurations.getByName("${variant.name}RuntimeElements")
+            component.setupFromConfigurations(archives, apiElements, runtimeElements)
             project.components.add(component)
 
             if (variant.name == libraryExtension.defaultPublishConfig) {
-                defaultComponent.setupFromConfigurations(archives, variant.compileConfiguration, variant.runtimeConfiguration)
+                defaultComponent.setupFromConfigurations(archives, apiElements, runtimeElements)
             }
         }
     }
@@ -86,9 +91,22 @@ class AarPublishPlugin @Inject constructor(
         return archives
     }
 
-    private fun AdhocComponentWithVariants.setupFromConfigurations(archivesConfiguration: Configuration, compileConfiguration: Configuration, runtimeConfiguration: Configuration) {
-        addVariantsFromConfiguration(archivesConfiguration) {}
-        addVariantsFromConfiguration(compileConfiguration) { it.mapToMavenScope("compile") }
-        addVariantsFromConfiguration(runtimeConfiguration) { it.mapToMavenScope("runtime") }
+    private fun AdhocComponentWithVariants.setupFromConfigurations(archives: Configuration, apiElements: Configuration, runtimeElements: Configuration) {
+        addVariantsFromConfiguration(archives) {}
+        addVariantsFromConfiguration(apiElements, AndroidConfigurationVariantMapping("compile"))
+        addVariantsFromConfiguration(runtimeElements, AndroidConfigurationVariantMapping("runtime"))
+    }
+
+    private class AndroidConfigurationVariantMapping(private val scope: String) : Action<ConfigurationVariantDetails> {
+        override fun execute(details: ConfigurationVariantDetails) {
+            if (!details.configurationVariant.isIgnored) {
+                details.mapToMavenScope(scope)
+            } else {
+                details.skip()
+            }
+        }
+
+        private val ConfigurationVariant.isIgnored: Boolean
+            get() = artifacts.any { it.type.contains("android-") || it.type == "jar" }
     }
 }
