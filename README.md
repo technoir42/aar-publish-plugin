@@ -1,6 +1,8 @@
 AAR Publish Plugin
 ==================
 
+[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/github/technoir42/aar-publish/com.github.technoir42.aar-publish.gradle.plugin/maven-metadata.xml.svg?colorB=007ec6&label=gradlePluginPortal)](https://plugins.gradle.org/plugin/com.github.technoir42.aar-publish)
+
 Gradle plugin for publishing Android (AAR) libraries using [Maven Publish](https://docs.gradle.org/current/userguide/publishing_maven.html) plugin.
 
 ## Requirements
