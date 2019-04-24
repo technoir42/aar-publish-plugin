@@ -13,7 +13,7 @@ Gradle plugin for publishing Android (AAR) libraries using [Maven Publish](https
 ```groovy
 plugins {
     id "com.android.library"
-    id "com.github.technoir42.aar-publish" version "1.0.1"
+    id "com.github.technoir42.aar-publish" version "1.0.2"
     id "maven-publish"
 }
 
