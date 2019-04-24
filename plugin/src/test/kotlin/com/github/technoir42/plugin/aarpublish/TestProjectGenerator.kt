@@ -9,7 +9,7 @@ class TestProjectGenerator(
     private val artifactId: String,
     private val version: String,
     private val packageName: String,
-    private val androidPluginVersion: String = "3.3.2",
+    private val androidPluginVersion: String,
     private val apiLevel: Int = 28
 ) {
     private val buildGradleFile = File(projectDir, "build.gradle")

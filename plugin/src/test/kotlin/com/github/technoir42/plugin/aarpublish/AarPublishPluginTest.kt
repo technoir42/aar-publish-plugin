@@ -3,32 +3,39 @@ package com.github.technoir42.plugin.aarpublish
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import org.assertj.core.api.Assertions.assertThat
+import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.File
 import java.util.zip.ZipFile
 
-class AarPublishPluginTest {
-    private val groupId = "com.test"
-    private val artifactId = "mylib"
-    private val version = "1.0.0"
-    private val packageName = "com.test.mylib"
-
+@RunWith(Parameterized::class)
+class AarPublishPluginTest(private val gradleVersion: String, private val androidPluginVersion: String) {
     private lateinit var mavenRepo: MavenRepo
     private lateinit var projectGenerator: TestProjectGenerator
 
-    @TempDir
-    lateinit var projectDir: File
+    @Rule
+    @JvmField
+    val tempFolder = TemporaryFolder()
+    private lateinit var projectDir: File
 
-    @BeforeEach
+    @Before
     fun setUp() {
-        mavenRepo = MavenRepo(projectDir.newDirectory("maven"))
+        projectDir = tempFolder.newFolder("project")
+        mavenRepo = MavenRepo(tempFolder.newFolder("maven"))
 
         projectGenerator = TestProjectGenerator(
+            androidPluginVersion = androidPluginVersion,
             projectDir = projectDir,
             mavenRepoDir = mavenRepo.path,
             groupId = groupId,
@@ -41,11 +48,7 @@ class AarPublishPluginTest {
 
     @Test
     fun publish() {
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withPluginClasspath()
-            .withArguments("publish")
-            .build()
+        val result = buildAndPublish()
 
         assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
         verifyArtifacts(javadoc = true, sources = true)
@@ -55,11 +58,7 @@ class AarPublishPluginTest {
     fun publishWithJavadoc() {
         projectGenerator.configureAarPublishing(publishJavadoc = true, publishSources = false)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withPluginClasspath()
-            .withArguments("publish")
-            .build()
+        val result = buildAndPublish()
 
         assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
         verifyArtifacts(javadoc = true, sources = false)
@@ -69,11 +68,7 @@ class AarPublishPluginTest {
     fun publishWithSources() {
         projectGenerator.configureAarPublishing(publishJavadoc = false, publishSources = true)
 
-        val result = GradleRunner.create()
-            .withProjectDir(projectDir)
-            .withPluginClasspath()
-            .withArguments("publish")
-            .build()
+        val result = buildAndPublish()
 
         assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
         verifyArtifacts(javadoc = false, sources = true)
@@ -83,14 +78,19 @@ class AarPublishPluginTest {
     fun publishWithoutJavadocAndSources() {
         projectGenerator.configureAarPublishing(publishJavadoc = false, publishSources = false)
 
-        val result = GradleRunner.create()
+        val result = buildAndPublish()
+
+        assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
+        verifyArtifacts(javadoc = false, sources = false)
+    }
+
+    private fun buildAndPublish(): BuildResult {
+        return GradleRunner.create()
+            .withGradleVersion(gradleVersion)
             .withProjectDir(projectDir)
             .withPluginClasspath()
             .withArguments("publish")
             .build()
-
-        assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
-        verifyArtifacts(javadoc = false, sources = false)
     }
 
     private fun verifyArtifacts(javadoc: Boolean, sources: Boolean) {
@@ -146,6 +146,25 @@ class AarPublishPluginTest {
         ZipFile(jar).use { zip ->
             val sourceFile = zip.getEntry("${packageNameToPath(packageName)}/Foo.java")
             assertNotNull(sourceFile)
+        }
+    }
+
+    companion object {
+        private const val groupId = "com.test"
+        private const val artifactId = "mylib"
+        private const val version = "1.0.0"
+        private const val packageName = "com.test.mylib"
+        private val GRADLE_VERSIONS = arrayOf("5.3.1", "5.4")
+        private val AGP_VERSIONS = arrayOf("3.3.2", "3.4.0", "3.5.0-alpha12")
+
+        @JvmStatic
+        @Parameterized.Parameters(name = "Gradle: {0}, AGP: {1}")
+        fun params(): List<Array<Any>> {
+            return GRADLE_VERSIONS.asSequence()
+                .flatMap { gradleVersion ->
+                    AGP_VERSIONS.asSequence().map { androidPluginVersion -> arrayOf<Any>(gradleVersion, androidPluginVersion) }
+                }
+                .toList()
         }
     }
 }
