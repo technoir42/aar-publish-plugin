@@ -40,7 +40,7 @@ class AarPublishPluginTest(private val androidPluginVersion: String, private val
 
         val pluginClasspath = PluginUnderTestMetadataReading.readImplementationClasspath()
             .asSequence()
-            .map { it.absolutePath.replace("\\", "\\\\") }
+            .map { it.absolutePath.replace("\\", "\\\\") } // escape backslashes in Windows paths
             .joinToString(", ") { "'$it'" }
 
         projectGenerator = TestProjectGenerator(
