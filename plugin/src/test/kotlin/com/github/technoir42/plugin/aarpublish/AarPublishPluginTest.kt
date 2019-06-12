@@ -6,6 +6,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import org.gradle.testkit.runner.internal.PluginUnderTestMetadataReading
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -36,7 +37,13 @@ class AarPublishPluginTest(private val gradleVersion: String, private val androi
         projectDir = tempFolder.newFolder("project")
         mavenRepo = MavenRepo(tempFolder.newFolder("maven"))
 
+        val pluginClasspath = PluginUnderTestMetadataReading.readImplementationClasspath()
+            .asSequence()
+            .map { it.absolutePath.replace("\\", "\\\\") }
+            .joinToString(", ") { "'$it'" }
+
         projectGenerator = TestProjectGenerator(
+            pluginClasspath = pluginClasspath,
             androidPluginVersion = androidPluginVersion,
             projectDir = projectDir,
             mavenRepoDir = mavenRepo.path,
@@ -98,7 +105,6 @@ class AarPublishPluginTest(private val gradleVersion: String, private val androi
         return GradleRunner.create()
             .withGradleVersion(gradleVersion)
             .withProjectDir(projectDir)
-            .withPluginClasspath()
             .withArguments("publish")
             .build()
     }

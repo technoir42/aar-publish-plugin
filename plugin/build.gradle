@@ -25,14 +25,6 @@ publishing {
     publications {
         pluginMaven(MavenPublication) {
             artifactId = "aar-publish-plugin"
-
-            pom.withXml {
-                asNode().dependencies.dependency.each {
-                    if (it.groupId.text() == "com.android.tools.build" && it.artifactId.text() == "gradle") {
-                        it.scope*.value = "provided"
-                    }
-                }
-            }
         }
     }
 }
@@ -55,7 +47,7 @@ pluginBundle {
 }
 
 dependencies {
-    implementation "com.android.tools.build:gradle:3.3.0"
+    compileOnly "com.android.tools.build:gradle:3.3.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     compileOnly "javax.inject:javax.inject:1"
 

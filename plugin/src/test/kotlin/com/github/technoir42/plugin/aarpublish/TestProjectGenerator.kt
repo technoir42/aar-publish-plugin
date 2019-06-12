@@ -3,6 +3,7 @@ package com.github.technoir42.plugin.aarpublish
 import java.io.File
 
 class TestProjectGenerator(
+    private val pluginClasspath: String,
     private val projectDir: File,
     private val mavenRepoDir: File,
     private val groupId: String,
@@ -46,15 +47,13 @@ class TestProjectGenerator(
                 }
                 dependencies {
                     classpath "com.android.tools.build:gradle:$androidPluginVersion"
+                    classpath files($pluginClasspath)
                 }
             }
 
-            plugins {
-                id "com.github.technoir42.aar-publish"
-                id "maven-publish"
-            }
-
             apply plugin: "com.android.library"
+            apply plugin: "com.github.technoir42.aar-publish"
+            apply plugin: "maven-publish"
 
             group = "$groupId"
             version = "$version"
