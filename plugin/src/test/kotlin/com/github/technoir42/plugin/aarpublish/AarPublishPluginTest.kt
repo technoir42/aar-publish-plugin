@@ -7,6 +7,7 @@ import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.testkit.runner.internal.PluginUnderTestMetadataReading
+import org.gradle.util.GradleVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -23,7 +24,7 @@ import java.io.File
 import java.util.zip.ZipFile
 
 @RunWith(Parameterized::class)
-class AarPublishPluginTest(private val gradleVersion: String, private val androidPluginVersion: String) {
+class AarPublishPluginTest(private val androidPluginVersion: String, private val gradleVersion: String) {
     private lateinit var mavenRepo: MavenRepo
     private lateinit var projectGenerator: TestProjectGenerator
 
@@ -170,15 +171,26 @@ class AarPublishPluginTest(private val gradleVersion: String, private val androi
         private const val artifactId = "mylib"
         private const val version = "1.0.0"
         private const val packageName = "com.test.mylib"
-        private val GRADLE_VERSIONS = arrayOf("5.3.1", "5.4")
-        private val AGP_VERSIONS = arrayOf("3.3.2", "3.4.0", "3.5.0-alpha12")
+
+        private val AGP_VERSIONS = arrayOf(
+            AndroidPluginVersion("3.3.2", minGradleVersion = "4.10.1"),
+            AndroidPluginVersion("3.4.1", minGradleVersion = "5.1.1"),
+            AndroidPluginVersion("3.5.0-beta04", minGradleVersion = "5.4.1"),
+            AndroidPluginVersion("3.6.0-alpha03", minGradleVersion = "5.4.1")
+        )
+        private val GRADLE_VERSIONS = arrayOf(
+            GradleVersion.version("5.3.1"),
+            GradleVersion.version("5.4.1")
+        )
 
         @JvmStatic
-        @Parameters(name = "Gradle: {0}, AGP: {1}")
+        @Parameters(name = "AGP: {0}, Gradle: {1}")
         fun params(): List<Array<Any>> {
-            return GRADLE_VERSIONS.asSequence()
-                .flatMap { gradleVersion ->
-                    AGP_VERSIONS.asSequence().map { androidPluginVersion -> arrayOf<Any>(gradleVersion, androidPluginVersion) }
+            return AGP_VERSIONS.asSequence()
+                .flatMap { androidPluginVersion ->
+                    GRADLE_VERSIONS.asSequence()
+                        .filter { gradleVersion -> gradleVersion >= androidPluginVersion.minGradleVersion }
+                        .map { gradleVersion -> arrayOf<Any>(androidPluginVersion.version, gradleVersion.version) }
                 }
                 .toList()
         }
