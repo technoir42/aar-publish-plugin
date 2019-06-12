@@ -9,6 +9,7 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -16,6 +17,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import org.junit.runners.Parameterized.Parameters
 import java.io.File
 import java.util.zip.ZipFile
 
@@ -50,7 +52,9 @@ class AarPublishPluginTest(private val gradleVersion: String, private val androi
     fun publish() {
         val result = buildAndPublish()
 
-        assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":packageReleaseJavadoc")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":packageReleaseSources")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":publish")?.outcome)
         verifyArtifacts(javadoc = true, sources = true)
     }
 
@@ -60,7 +64,9 @@ class AarPublishPluginTest(private val gradleVersion: String, private val androi
 
         val result = buildAndPublish()
 
-        assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
+        assertNull(result.task(":packageReleaseSources"))
+        assertEquals(TaskOutcome.SUCCESS, result.task(":packageReleaseJavadoc")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":publish")?.outcome)
         verifyArtifacts(javadoc = true, sources = false)
     }
 
@@ -70,7 +76,9 @@ class AarPublishPluginTest(private val gradleVersion: String, private val androi
 
         val result = buildAndPublish()
 
-        assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
+        assertNull(result.task(":packageReleaseJavadoc"))
+        assertEquals(TaskOutcome.SUCCESS, result.task(":packageReleaseSources")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":publish")?.outcome)
         verifyArtifacts(javadoc = false, sources = true)
     }
 
@@ -80,7 +88,9 @@ class AarPublishPluginTest(private val gradleVersion: String, private val androi
 
         val result = buildAndPublish()
 
-        assertTrue(result.task(":publish")?.outcome == TaskOutcome.SUCCESS)
+        assertNull(result.task(":packageReleaseJavadoc"))
+        assertNull(result.task(":packageReleaseSources"))
+        assertEquals(TaskOutcome.SUCCESS, result.task(":publish")?.outcome)
         verifyArtifacts(javadoc = false, sources = false)
     }
 
@@ -158,7 +168,7 @@ class AarPublishPluginTest(private val gradleVersion: String, private val androi
         private val AGP_VERSIONS = arrayOf("3.3.2", "3.4.0", "3.5.0-alpha12")
 
         @JvmStatic
-        @Parameterized.Parameters(name = "Gradle: {0}, AGP: {1}")
+        @Parameters(name = "Gradle: {0}, AGP: {1}")
         fun params(): List<Array<Any>> {
             return GRADLE_VERSIONS.asSequence()
                 .flatMap { gradleVersion ->
