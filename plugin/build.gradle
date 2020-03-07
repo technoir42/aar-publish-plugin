@@ -1,7 +1,7 @@
 plugins {
     id "java-gradle-plugin"
-    id "com.gradle.plugin-publish" version "0.10.1"
-    id "org.jetbrains.kotlin.jvm" version "1.3.21"
+    id "com.gradle.plugin-publish"
+    id "org.jetbrains.kotlin.jvm"
     id "maven-publish"
 }
 
@@ -51,11 +51,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     compileOnly "javax.inject:javax.inject:1"
 
-    testCompileOnly "junit:junit:4.12"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.4.2"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.4.2"
-    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.4.2"
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.4.2"
-    testImplementation "org.assertj:assertj-core:3.11.1"
-    testImplementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.8"
+    testCompileOnly "junit:junit:4.13"
+    testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.0"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.6.0"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.6.0"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.6.0"
+    testImplementation "org.assertj:assertj-core:3.15.0"
+    testImplementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.3"
 }
