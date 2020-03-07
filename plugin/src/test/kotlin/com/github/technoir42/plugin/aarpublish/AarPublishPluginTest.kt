@@ -40,7 +40,7 @@ class AarPublishPluginTest(private val androidPluginVersion: String, private val
 
         val pluginClasspath = PluginUnderTestMetadataReading.readImplementationClasspath()
             .asSequence()
-            .map { it.absolutePath.replace("\\", "\\\\") } // escape backslashes in Windows paths
+            .map { it.escapedPath }
             .joinToString(", ") { "'$it'" }
 
         projectGenerator = TestProjectGenerator(
@@ -174,13 +174,13 @@ class AarPublishPluginTest(private val androidPluginVersion: String, private val
 
         private val AGP_VERSIONS = arrayOf(
             AndroidPluginVersion("3.3.2", minGradleVersion = "4.10.1"),
-            AndroidPluginVersion("3.4.1", minGradleVersion = "5.1.1"),
-            AndroidPluginVersion("3.5.0-beta04", minGradleVersion = "5.4.1"),
-            AndroidPluginVersion("3.6.0-alpha03", minGradleVersion = "5.4.1")
+            AndroidPluginVersion("3.4.2", minGradleVersion = "5.1.1"),
+            AndroidPluginVersion("3.5.3", minGradleVersion = "5.4.1"),
+            AndroidPluginVersion("3.6.1", minGradleVersion = "5.6.4")
         )
         private val GRADLE_VERSIONS = arrayOf(
             GradleVersion.version("5.3.1"),
-            GradleVersion.version("5.4.1")
+            GradleVersion.version("5.6.4")
         )
 
         @JvmStatic

@@ -79,7 +79,7 @@ class TestProjectGenerator(
 
                 repositories {
                     maven {
-                        url "${mavenRepoDir.path}"
+                        url "${mavenRepoDir.escapedPath}"
                     }
                 }
             }
@@ -105,7 +105,7 @@ class TestProjectGenerator(
             ?: throw AssertionError("ANDROID_HOME is not set")
 
         val localPropertiesFile = projectDir.newFile("local.properties")
-        localPropertiesFile.writeText("sdk.dir=$androidHome")
+        localPropertiesFile.writeText("sdk.dir=${File(androidHome).escapedPath}")
     }
 
     private fun createAndroidManifest() {

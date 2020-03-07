@@ -8,6 +8,9 @@ fun File.newFile(path: String): File {
     return file
 }
 
+val File.escapedPath: String
+    get() = absolutePath.replace("\\", "\\\\") // escape backslashes on Windows
+
 fun packageNameToPath(packageName: String): String {
     return packageName.replace('.', '/')
 }
