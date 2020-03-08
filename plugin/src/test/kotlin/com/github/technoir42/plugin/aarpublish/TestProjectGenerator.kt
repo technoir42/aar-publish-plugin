@@ -11,19 +11,20 @@ class TestProjectGenerator(
     private val version: String,
     private val packageName: String,
     private val androidPluginVersion: String,
-    private val apiLevel: Int = 28
+    private val apiLevel: Int = 30
 ) {
     private val buildGradleFile = File(projectDir, "build.gradle")
 
-    fun generate() {
-        createBuildGradle()
+    fun generate(publishedComponent: String, publishJavadoc: Boolean, publishSources: Boolean) {
+        createBuildGradle(publishedComponent)
         createSettingsGradle()
         createLocalProperties()
         createAndroidManifest()
-        createJavaSourceFile()
+        createSourceFiles()
+        configureAarPublishing(publishJavadoc, publishSources)
     }
 
-    fun configureAarPublishing(publishJavadoc: Boolean, publishSources: Boolean) {
+    private fun configureAarPublishing(publishJavadoc: Boolean, publishSources: Boolean) {
         //language=Groovy
         buildGradleFile.appendText(
             """
@@ -36,7 +37,7 @@ class TestProjectGenerator(
         )
     }
 
-    private fun createBuildGradle() {
+    private fun createBuildGradle(publishedComponent: String) {
         //language=Groovy
         buildGradleFile.writeText(
             """
@@ -68,12 +69,24 @@ class TestProjectGenerator(
                 defaultConfig {
                     targetSdkVersion $apiLevel
                 }
+
+                flavorDimensions "environment"
+                productFlavors {
+                    development {
+                        dimension "environment"
+                    }
+                    production {
+                        dimension "environment"
+                    }
+                }
             }
 
             publishing {
                 publications {
                     maven(MavenPublication) {
-                        from components.android
+                        afterEvaluate {
+                            from components.${publishedComponent}
+                        }
                     }
                 }
 
@@ -82,13 +95,6 @@ class TestProjectGenerator(
                         url "${mavenRepoDir.escapedPath}"
                     }
                 }
-            }
-
-            dependencies {
-                compileOnly "commons-codec:commons-codec:1.12"
-                api "org.apache.commons:commons-collections4:4.3"
-                implementation "commons-io:commons-io:2.6"
-                runtimeOnly "org.apache.commons:commons-lang3:3.8"
             }
         """.trimIndent()
         )
@@ -118,19 +124,76 @@ class TestProjectGenerator(
         )
     }
 
-    private fun createJavaSourceFile() {
-        val javaSourceFile = projectDir.newFile("src/main/java/${packageNameToPath(packageName)}/Foo.java")
+    private fun createSourceFiles() {
+        val packagePath = packageNameToPath(packageName)
         //language=JAVA
-        javaSourceFile.writeText(
-            """
-            package $packageName;
+        projectDir.newFile("src/main/java/$packagePath/Main.java")
+            .writeText(
+                """
+                    package $packageName;
 
-            /**
-             * Sample class.
-             */
-            public class Foo {
-            }
-        """.trimIndent()
-        )
+                    /**
+                     * Main class.
+                     */
+                    public class Main {
+                    }
+                """.trimIndent()
+            )
+
+        //language=JAVA
+        projectDir.newFile("src/development/java/$packagePath/DevelopmentOnly.java")
+            .writeText(
+                """
+                    package $packageName;
+
+                    /**
+                     * Development-only class.
+                     */
+                    public class DevelopmentOnly {
+                    }
+                """.trimIndent()
+            )
+
+        //language=JAVA
+        projectDir.newFile("src/production/java/$packagePath/ProductionOnly.java")
+            .writeText(
+                """
+                    package $packageName;
+
+                    /**
+                     * Production-only class.
+                     */
+                    public class ProductionOnly {
+                    }
+                """.trimIndent()
+            )
+
+        //language=JAVA
+        projectDir.newFile("src/debug/java/$packagePath/DebugOnly.java")
+            .writeText(
+                """
+                    package $packageName;
+
+                    /**
+                     * Debug-only class.
+                     */
+                    public class DebugOnly {
+                    }
+                """.trimIndent()
+            )
+
+        //language=JAVA
+        projectDir.newFile("src/release/java/$packagePath/ReleaseOnly.java")
+            .writeText(
+                """
+                    package $packageName;
+
+                    /**
+                     * Release-only class.
+                     */
+                    public class ReleaseOnly {
+                    }
+                """.trimIndent()
+            )
     }
 }

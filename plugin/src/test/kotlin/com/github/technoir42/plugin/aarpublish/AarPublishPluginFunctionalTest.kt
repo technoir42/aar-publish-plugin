@@ -1,8 +1,5 @@
 package com.github.technoir42.plugin.aarpublish
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.dataformat.xml.XmlMapper
-import org.assertj.core.api.Assertions.assertThat
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -53,53 +50,41 @@ class AarPublishPluginFunctionalTest(private val androidPluginVersion: String, p
             version = version,
             packageName = packageName
         )
-        projectGenerator.generate()
     }
 
     @Test
-    fun publish() {
+    fun `publish single variant`() {
+        projectGenerator.generate("developmentDebug", publishJavadoc = true, publishSources = true)
+
         val result = buildAndPublish()
 
-        assertEquals(TaskOutcome.SUCCESS, result.task(":packageReleaseJavadoc")?.outcome)
-        assertEquals(TaskOutcome.SUCCESS, result.task(":packageReleaseSources")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":javadocDevelopmentDebugJar")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":sourcesDevelopmentDebugJar")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":publish")?.outcome)
-        verifyArtifacts(javadoc = true, sources = true)
+        verifyJavadoc(true, Variant.DevelopmentDebug, "javadoc")
+        verifySources(true, Variant.DevelopmentDebug, "sources")
     }
 
+    // TODO: Try to consume an actual library published with .all
     @Test
-    fun publishWithJavadoc() {
-        projectGenerator.configureAarPublishing(publishJavadoc = true, publishSources = false)
+    fun `publish multiple variants`() {
+        projectGenerator.generate("all", publishJavadoc = true, publishSources = true)
 
         val result = buildAndPublish()
 
-        assertNull(result.task(":packageReleaseSources"))
-        assertEquals(TaskOutcome.SUCCESS, result.task(":packageReleaseJavadoc")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":javadocDevelopmentDebugJar")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":sourcesDevelopmentDebugJar")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":javadocDevelopmentReleaseJar")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":sourcesDevelopmentReleaseJar")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":javadocProductionDebugJar")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":sourcesProductionDebugJar")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":javadocProductionReleaseJar")?.outcome)
+        assertEquals(TaskOutcome.SUCCESS, result.task(":sourcesProductionReleaseJar")?.outcome)
         assertEquals(TaskOutcome.SUCCESS, result.task(":publish")?.outcome)
-        verifyArtifacts(javadoc = true, sources = false)
-    }
-
-    @Test
-    fun publishWithSources() {
-        projectGenerator.configureAarPublishing(publishJavadoc = false, publishSources = true)
-
-        val result = buildAndPublish()
-
-        assertNull(result.task(":packageReleaseJavadoc"))
-        assertEquals(TaskOutcome.SUCCESS, result.task(":packageReleaseSources")?.outcome)
-        assertEquals(TaskOutcome.SUCCESS, result.task(":publish")?.outcome)
-        verifyArtifacts(javadoc = false, sources = true)
-    }
-
-    @Test
-    fun publishWithoutJavadocAndSources() {
-        projectGenerator.configureAarPublishing(publishJavadoc = false, publishSources = false)
-
-        val result = buildAndPublish()
-
-        assertNull(result.task(":packageReleaseJavadoc"))
-        assertNull(result.task(":packageReleaseSources"))
-        assertEquals(TaskOutcome.SUCCESS, result.task(":publish")?.outcome)
-        verifyArtifacts(javadoc = false, sources = false)
+        Variant.values().forEach {
+            verifyJavadoc(true, it, "${it.variantName}-javadoc")
+            verifySources(true, it, "${it.variantName}-sources")
+        }
     }
 
     private fun buildAndPublish(): BuildResult {
@@ -111,60 +96,77 @@ class AarPublishPluginFunctionalTest(private val androidPluginVersion: String, p
             .build()
     }
 
-    private fun verifyArtifacts(javadoc: Boolean, sources: Boolean) {
-        val pom = mavenRepo.getArtifactPath(groupId, artifactId, version, extension = "pom")
-        assertTrue(pom.exists())
-        verifyPom(pom)
-
-        val aar = mavenRepo.getArtifactPath(groupId, artifactId, version, extension = "aar")
-        assertTrue(aar.exists())
-
-        val javadocJar = mavenRepo.getArtifactPath(groupId, artifactId, version, extension = "jar", classifier = "javadoc")
-        if (javadoc) {
+    private fun verifyJavadoc(exists: Boolean, variant: Variant, classifier: String) {
+        val javadocJar = mavenRepo.getArtifactPath(groupId, artifactId, version, extension = "jar", classifier = classifier)
+        if (exists) {
             assertTrue(javadocJar.exists())
-            verifyJavadocJar(javadocJar)
+            verifyJavadocJar(javadocJar, variant)
         } else {
             assertFalse(javadocJar.exists())
         }
+    }
 
-        val sourcesJar = mavenRepo.getArtifactPath(groupId, artifactId, version, extension = "jar", classifier = "sources")
-        if (sources) {
+    // TODO: Merge both into one
+    private fun verifySources(exists: Boolean, variant: Variant, classifier: String) {
+        val sourcesJar = mavenRepo.getArtifactPath(groupId, artifactId, version, extension = "jar", classifier = classifier)
+        if (exists) {
             assertTrue(sourcesJar.exists())
-            verifySourcesJar(sourcesJar)
+            verifySourcesJar(sourcesJar, variant)
         } else {
             assertFalse(sourcesJar.exists())
         }
     }
 
-    private fun verifyPom(pomFile: File) {
-        val mapper = XmlMapper().apply {
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        }
-        val project = mapper.readValue<PomProject>(pomFile, PomProject::class.java)
-
-        assertEquals(groupId, project.groupId)
-        assertEquals(artifactId, project.artifactId)
-        assertEquals(version, project.version)
-        assertEquals("aar", project.packaging)
-        assertThat(project.dependencies).containsExactlyInAnyOrder(
-            PomDependency(groupId = "org.apache.commons", artifactId = "commons-collections4", version = "4.3", scope = "compile"),
-            PomDependency(groupId = "commons-io", artifactId = "commons-io", version = "2.6", scope = "runtime"),
-            PomDependency(groupId = "org.apache.commons", artifactId = "commons-lang3", version = "3.8", scope = "runtime")
-        )
-    }
-
-    private fun verifyJavadocJar(jar: File) {
-        ZipFile(jar).use { zip ->
-            val htmlFile = zip.getEntry("${packageNameToPath(packageName)}/Foo.html")
-            assertNotNull(htmlFile)
+    private fun verifyJavadocJar(javadocJar: File, variant: Variant) {
+        ZipFile(javadocJar).use { zip ->
+            val packagePath = packageNameToPath(packageName)
+            assertNotNull(zip.getEntry("$packagePath/Main.html"))
+            Variant.values().forEach {
+                val flavorSpecific = zip.getEntry("$packagePath/${it.flavor.capitalize()}Only.html")
+                if (it.flavor == variant.flavor) {
+                    assertNotNull(flavorSpecific)
+                } else {
+                    assertNull(flavorSpecific)
+                }
+                val buildTypeSpecific = zip.getEntry("$packagePath/${it.buildType.capitalize()}Only.html")
+                if (it.buildType == variant.buildType) {
+                    assertNotNull(buildTypeSpecific)
+                } else {
+                    assertNull(buildTypeSpecific)
+                }
+            }
         }
     }
 
-    private fun verifySourcesJar(jar: File) {
-        ZipFile(jar).use { zip ->
-            val sourceFile = zip.getEntry("${packageNameToPath(packageName)}/Foo.java")
-            assertNotNull(sourceFile)
+    private fun verifySourcesJar(sourcesJar: File, variant: Variant) {
+        ZipFile(sourcesJar).use { zip ->
+            val packagePath = packageNameToPath(packageName)
+            assertNotNull(zip.getEntry("$packagePath/Main.java"))
+            Variant.values().forEach {
+                val flavorSpecific = zip.getEntry("$packagePath/${it.flavor.capitalize()}Only.java")
+                if (it.flavor == variant.flavor) {
+                    assertNotNull(flavorSpecific)
+                } else {
+                    assertNull(flavorSpecific)
+                }
+                val buildTypeSpecific = zip.getEntry("$packagePath/${it.buildType.capitalize()}Only.java")
+                if (it.buildType == variant.buildType) {
+                    assertNotNull(buildTypeSpecific)
+                } else {
+                    assertNull(buildTypeSpecific)
+                }
+            }
         }
+    }
+
+    private enum class Variant(val flavor: String, val buildType: String) {
+        DevelopmentDebug("development", "debug"),
+        DevelopmentRelease("development", "release"),
+        ProductionDebug("production", "debug"),
+        ProductionRelease("production", "release");
+
+        val variantName: String
+            get() = flavor + buildType.capitalize()
     }
 
     companion object {
@@ -174,14 +176,11 @@ class AarPublishPluginFunctionalTest(private val androidPluginVersion: String, p
         private const val packageName = "com.test.mylib"
 
         private val AGP_VERSIONS = arrayOf(
-            AndroidPluginVersion("3.3.2", minGradleVersion = "4.10.1"),
-            AndroidPluginVersion("3.4.2", minGradleVersion = "5.1.1"),
-            AndroidPluginVersion("3.5.3", minGradleVersion = "5.4.1"),
             AndroidPluginVersion("3.6.1", minGradleVersion = "5.6.4"),
-            AndroidPluginVersion("4.0.1", minGradleVersion = "6.1.1")
+            AndroidPluginVersion("4.0.1", minGradleVersion = "6.1.1"),
+            AndroidPluginVersion("4.1.0-rc03", minGradleVersion = "6.2.1")
         )
         private val GRADLE_VERSIONS = arrayOf(
-            GradleVersion.version("5.3.1"),
             GradleVersion.version("5.6.4"),
             GradleVersion.version("6.6.1")
         )

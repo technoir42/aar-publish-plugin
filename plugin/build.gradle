@@ -27,7 +27,7 @@ gradlePlugin {
         aarPublishPlugin {
             id = "com.github.technoir42.aar-publish"
             displayName = "AAR Publish Plugin"
-            description = "Plugin for publishing Android (AAR) libraries using Maven Publish plugin"
+            description = "Gradle plugin which enables publishing of sources and Javadoc for Android libraries"
             implementationClass = "com.github.technoir42.plugin.aarpublish.AarPublishPlugin"
         }
     }
@@ -40,13 +40,12 @@ pluginBundle {
 }
 
 dependencies {
-    compileOnly "com.android.tools.build:gradle:3.3.0"
+    compileOnly "com.android.tools.build:gradle:3.6.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    compileOnly "javax.inject:javax.inject:1"
 
+    testImplementation gradleTestKit()
+    testImplementation "com.android.tools.build:gradle:3.6.3"
     testImplementation "junit:junit:4.13"
-    testImplementation "org.assertj:assertj-core:3.15.0"
-    testImplementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.3"
 }
 
 validatePlugins {

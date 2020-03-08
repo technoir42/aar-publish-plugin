@@ -1,5 +1,7 @@
 package com.github.technoir42.plugin.aarpublish
 
+import org.gradle.api.Project
+import org.gradle.api.internal.project.ProjectInternal
 import java.io.File
 
 fun File.newFile(path: String): File {
@@ -13,4 +15,8 @@ val File.escapedPath: String
 
 fun packageNameToPath(packageName: String): String {
     return packageName.replace('.', '/')
+}
+
+fun Project.evaluate() {
+    (this as ProjectInternal).evaluate()
 }
