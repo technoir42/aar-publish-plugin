@@ -17,6 +17,7 @@ import org.gradle.api.component.SoftwareComponentFactory
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.external.javadoc.CoreJavadocOptions
 import org.gradle.jvm.tasks.Jar
+import java.io.File
 import javax.inject.Inject
 
 @Suppress("UnstableApiUsage")
@@ -62,6 +63,7 @@ class AarPublishPlugin @Inject constructor(
                 variant.getSourceFolders(SourceKind.JAVA).forEach { task.source += it }
                 task.classpath += project.files(libraryExtension.bootClasspath)
                 task.classpath += variant.javaCompileProvider.get().classpath
+                task.destinationDir = File(project.buildDir, "docs/javadoc/${variant.name}")
                 if (JavaVersion.current().isJava9Compatible) {
                     (task.options as CoreJavadocOptions).addBooleanOption("html5", true)
                 }
