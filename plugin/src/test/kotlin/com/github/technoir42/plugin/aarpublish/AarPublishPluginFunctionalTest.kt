@@ -24,7 +24,7 @@ import java.io.File
 import java.util.zip.ZipFile
 
 @RunWith(Parameterized::class)
-class AarPublishPluginTest(private val androidPluginVersion: String, private val gradleVersion: String) {
+class AarPublishPluginFunctionalTest(private val androidPluginVersion: String, private val gradleVersion: String) {
     private lateinit var mavenRepo: MavenRepo
     private lateinit var projectGenerator: TestProjectGenerator
 
