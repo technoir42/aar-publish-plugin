@@ -14,13 +14,12 @@ import org.gradle.api.artifacts.ConfigurationVariant
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.component.ConfigurationVariantDetails
 import org.gradle.api.component.SoftwareComponentFactory
+import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.external.javadoc.CoreJavadocOptions
-import org.gradle.jvm.tasks.Jar
 import java.io.File
 import javax.inject.Inject
 
-@Suppress("UnstableApiUsage")
 class AarPublishPlugin @Inject constructor(
     private val softwareComponentFactory: SoftwareComponentFactory
 ) : Plugin<Project> {
