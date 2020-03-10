@@ -21,10 +21,6 @@ java {
     withSourcesJar()
 }
 
-test {
-    useJUnitPlatform()
-}
-
 publishing {
     publications {
         pluginMaven(MavenPublication) {
@@ -55,11 +51,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
     compileOnly "javax.inject:javax.inject:1"
 
-    testCompileOnly "junit:junit:4.13"
-    testImplementation "org.junit.jupiter:junit-jupiter-api:5.6.0"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.6.0"
-    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.6.0"
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.6.0"
+    testImplementation "junit:junit:4.13"
     testImplementation "org.assertj:assertj-core:3.15.0"
     testImplementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.3"
 }
