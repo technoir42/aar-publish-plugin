@@ -6,6 +6,7 @@ import com.android.build.gradle.api.LibraryVariant
 import com.android.build.gradle.api.SourceKind
 import com.android.utils.appendCapitalized
 import org.gradle.api.Action
+import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
@@ -14,6 +15,7 @@ import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.component.ConfigurationVariantDetails
 import org.gradle.api.component.SoftwareComponentFactory
 import org.gradle.api.tasks.javadoc.Javadoc
+import org.gradle.external.javadoc.CoreJavadocOptions
 import org.gradle.jvm.tasks.Jar
 import javax.inject.Inject
 
@@ -60,6 +62,9 @@ class AarPublishPlugin @Inject constructor(
                 variant.getSourceFolders(SourceKind.JAVA).forEach { task.source += it }
                 task.classpath += project.files(libraryExtension.bootClasspath)
                 task.classpath += variant.javaCompileProvider.get().classpath
+                if (JavaVersion.current().isJava9Compatible) {
+                    (task.options as CoreJavadocOptions).addBooleanOption("html5", true)
+                }
             }
 
             val javadocJar = project.tasks.register("package${variant.name.capitalize()}Javadoc", Jar::class.java) { task ->
