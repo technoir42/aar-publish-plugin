@@ -26,15 +26,14 @@ class AarPublishPlugin @Inject constructor(
 ) : Plugin<Project> {
 
     override fun apply(project: Project) {
+        val aarPublishingExtension = project.extensions.create("aarPublishing", AarPublishingExtension::class.java)
         project.plugins.withId("com.android.library") {
-            configurePlugin(project)
+            val libraryExtension = project.extensions.getByType(LibraryExtension::class.java)
+            configurePlugin(project, libraryExtension, aarPublishingExtension)
         }
     }
 
-    private fun configurePlugin(project: Project) {
-        val aarPublishingExtension = project.extensions.create("aarPublishing", AarPublishingExtension::class.java)
-        val libraryExtension = project.extensions.findByType(LibraryExtension::class.java)!!
-
+    private fun configurePlugin(project: Project, libraryExtension: LibraryExtension, aarPublishingExtension: AarPublishingExtension) {
         val defaultComponent = softwareComponentFactory.adhoc("android")
         project.components.add(defaultComponent)
 
