@@ -14,6 +14,8 @@ import org.gradle.api.artifacts.ConfigurationVariant
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.component.ConfigurationVariantDetails
 import org.gradle.api.component.SoftwareComponentFactory
+import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.external.javadoc.CoreJavadocOptions
@@ -57,6 +59,8 @@ class AarPublishPlugin @Inject constructor(
 
         if (aarPublishingExtension.publishJavadoc) {
             val javadoc = project.tasks.register("javadoc${variant.name.capitalize()}", Javadoc::class.java) { task ->
+                task.group = JavaBasePlugin.DOCUMENTATION_GROUP
+                task.description = "Generates Javadoc API documentation for ${variant.name} variant."
                 task.dependsOn(variant.javaCompileProvider)
                 variant.getSourceFolders(SourceKind.JAVA).forEach { task.source += it }
                 task.classpath += project.files(libraryExtension.bootClasspath)
@@ -68,6 +72,8 @@ class AarPublishPlugin @Inject constructor(
             }
 
             val javadocJar = project.tasks.register("package${variant.name.capitalize()}Javadoc", Jar::class.java) { task ->
+                task.group = BasePlugin.BUILD_GROUP
+                task.description = "Assembles a jar archive containing the javadoc of ${variant.name} variant."
                 task.dependsOn(javadoc)
                 task.from(javadoc.get().destinationDir)
                 task.archiveClassifier.set("javadoc")
@@ -78,6 +84,8 @@ class AarPublishPlugin @Inject constructor(
 
         if (aarPublishingExtension.publishSources) {
             val sourcesJar = project.tasks.register("package${variant.name.capitalize()}Sources", Jar::class.java) { task ->
+                task.group = BasePlugin.BUILD_GROUP
+                task.description = "Assembles a jar archive containing the sources of ${variant.name} variant."
                 task.from(variant.getSourceFolders(SourceKind.JAVA))
 
                 val kotlinSources = variant.sourceSets.asSequence()
@@ -87,7 +95,6 @@ class AarPublishPlugin @Inject constructor(
                     .toList()
 
                 task.from(kotlinSources)
-
                 task.archiveClassifier.set("sources")
             }
 
