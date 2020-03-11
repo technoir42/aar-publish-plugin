@@ -36,3 +36,10 @@ jobs:
 
       - name: Build
         run: ./gradlew build
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: test-results
+          path: plugin/build/reports/tests/test

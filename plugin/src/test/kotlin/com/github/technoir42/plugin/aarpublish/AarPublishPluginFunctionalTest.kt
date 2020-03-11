@@ -106,7 +106,8 @@ class AarPublishPluginFunctionalTest(private val androidPluginVersion: String, p
         return GradleRunner.create()
             .withGradleVersion(gradleVersion)
             .withProjectDir(projectDir)
-            .withArguments("publish")
+            .withArguments("publish", "--stacktrace")
+            .forwardOutput()
             .build()
     }
 
