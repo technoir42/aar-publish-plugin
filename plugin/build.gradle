@@ -14,10 +14,6 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     }
 }
 
-java {
-    withSourcesJar()
-}
-
 publishing {
     publications {
         pluginMaven(MavenPublication) {
