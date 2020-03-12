@@ -8,6 +8,9 @@ subprojects {
         mavenCentral()
         jcenter()
     }
+
+    group = "com.github.technoir42"
+    version = "1.0.3"
 }
 
 wrapper {
