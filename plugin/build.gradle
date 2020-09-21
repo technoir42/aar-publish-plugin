@@ -48,3 +48,7 @@ dependencies {
     testImplementation "org.assertj:assertj-core:3.15.0"
     testImplementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.10.3"
 }
+
+validatePlugins {
+    enableStricterValidation = true
+}

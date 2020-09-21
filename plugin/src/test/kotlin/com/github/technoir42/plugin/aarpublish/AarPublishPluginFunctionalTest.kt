@@ -177,23 +177,23 @@ class AarPublishPluginFunctionalTest(private val androidPluginVersion: String, p
             AndroidPluginVersion("3.3.2", minGradleVersion = "4.10.1"),
             AndroidPluginVersion("3.4.2", minGradleVersion = "5.1.1"),
             AndroidPluginVersion("3.5.3", minGradleVersion = "5.4.1"),
-            AndroidPluginVersion("3.6.1", minGradleVersion = "5.6.4")
+            AndroidPluginVersion("3.6.1", minGradleVersion = "5.6.4"),
+            AndroidPluginVersion("4.0.1", minGradleVersion = "6.1.1")
         )
         private val GRADLE_VERSIONS = arrayOf(
             GradleVersion.version("5.3.1"),
-            GradleVersion.version("5.6.4")
+            GradleVersion.version("5.6.4"),
+            GradleVersion.version("6.6.1")
         )
 
         @JvmStatic
         @Parameters(name = "AGP: {0}, Gradle: {1}")
         fun params(): List<Array<Any>> {
-            return AGP_VERSIONS.asSequence()
-                .flatMap { androidPluginVersion ->
-                    GRADLE_VERSIONS.asSequence()
-                        .filter { gradleVersion -> gradleVersion >= androidPluginVersion.minGradleVersion }
-                        .map { gradleVersion -> arrayOf<Any>(androidPluginVersion.version, gradleVersion.version) }
+            return AGP_VERSIONS
+                .map { androidPluginVersion ->
+                    val gradleVersion = GRADLE_VERSIONS.first { it >= androidPluginVersion.minGradleVersion }
+                    arrayOf<Any>(androidPluginVersion.version, gradleVersion.version)
                 }
-                .toList()
         }
     }
 }

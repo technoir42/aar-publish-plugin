@@ -1,5 +1,7 @@
 package com.github.technoir42.plugin.aarpublish
 
+import com.android.build.api.attributes.BuildTypeAttr
+import com.android.build.api.attributes.ProductFlavorAttr
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.api.AndroidSourceSet
@@ -9,13 +11,18 @@ import com.android.build.gradle.api.SourceKind
 import com.android.utils.appendCapitalized
 import org.gradle.api.Action
 import org.gradle.api.JavaVersion
+import org.gradle.api.Named
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationVariant
+import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Bundling
+import org.gradle.api.attributes.Usage
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.component.ConfigurationVariantDetails
 import org.gradle.api.component.SoftwareComponentFactory
+import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.TaskProvider
@@ -61,7 +68,16 @@ class AarPublishPlugin @Inject constructor(
         baseExtension: BaseExtension,
         aarPublishingExtension: AarPublishingExtension
     ): Configuration {
-        val archives = project.configurations.create("${variant.name}Archives")
+        val archives = project.configurations.create("${variant.name}Archives") {
+            it.attributes.apply {
+                attribute(Usage.USAGE_ATTRIBUTE, project.objects.named("javadocAndSources"))
+                attribute(Bundling.BUNDLING_ATTRIBUTE, project.objects.named(Bundling.EXTERNAL))
+                attribute(BuildTypeAttr.ATTRIBUTE, project.objects.named(variant.buildType.name))
+                variant.productFlavors.forEach { flavor ->
+                    attribute(Attribute.of(flavor.dimension, ProductFlavorAttr::class.java), project.objects.named(flavor.name))
+                }
+            }
+        }
         project.artifacts.add(archives.name, variant.packageLibraryProvider)
 
         if (aarPublishingExtension.publishJavadoc) {
@@ -121,6 +137,8 @@ class AarPublishPlugin @Inject constructor(
         addVariantsFromConfiguration(apiElements, AndroidConfigurationVariantMapping("compile"))
         addVariantsFromConfiguration(runtimeElements, AndroidConfigurationVariantMapping("runtime"))
     }
+
+    private inline fun <reified T : Named> ObjectFactory.named(name: String): T = named(T::class.java, name)
 
     private class AndroidConfigurationVariantMapping(private val scope: String) : Action<ConfigurationVariantDetails> {
         override fun execute(details: ConfigurationVariantDetails) {
