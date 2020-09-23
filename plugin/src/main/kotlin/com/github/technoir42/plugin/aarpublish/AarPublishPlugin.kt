@@ -11,18 +11,15 @@ import com.android.build.gradle.api.SourceKind
 import com.android.utils.appendCapitalized
 import org.gradle.api.Action
 import org.gradle.api.JavaVersion
-import org.gradle.api.Named
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.ConfigurationVariant
-import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Bundling
 import org.gradle.api.attributes.Usage
 import org.gradle.api.component.AdhocComponentWithVariants
 import org.gradle.api.component.ConfigurationVariantDetails
 import org.gradle.api.component.SoftwareComponentFactory
-import org.gradle.api.model.ObjectFactory
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.tasks.TaskProvider
@@ -37,9 +34,9 @@ class AarPublishPlugin @Inject constructor(
 ) : Plugin<Project> {
 
     override fun apply(project: Project) {
-        val aarPublishingExtension = project.extensions.create("aarPublishing", AarPublishingExtension::class.java)
+        val aarPublishingExtension = project.extensions.create<AarPublishingExtension>("aarPublishing")
         project.plugins.withId("com.android.library") {
-            val libraryExtension = project.extensions.getByType(LibraryExtension::class.java)
+            val libraryExtension = project.extensions.getByType<LibraryExtension>()
             configurePlugin(project, libraryExtension, aarPublishingExtension)
         }
     }
@@ -74,7 +71,7 @@ class AarPublishPlugin @Inject constructor(
                 attribute(Bundling.BUNDLING_ATTRIBUTE, project.objects.named(Bundling.EXTERNAL))
                 attribute(BuildTypeAttr.ATTRIBUTE, project.objects.named(variant.buildType.name))
                 variant.productFlavors.forEach { flavor ->
-                    attribute(Attribute.of(flavor.dimension, ProductFlavorAttr::class.java), project.objects.named(flavor.name))
+                    attribute(attributeOf<ProductFlavorAttr>(flavor.dimension), project.objects.named(flavor.name))
                 }
             }
         }
@@ -93,7 +90,7 @@ class AarPublishPlugin @Inject constructor(
     }
 
     private fun registerJavadocTasks(project: Project, variant: BaseVariant, baseExtension: BaseExtension): TaskProvider<Jar> {
-        val javadoc = project.tasks.register("javadoc${variant.name.capitalize()}", Javadoc::class.java) { task ->
+        val javadoc = project.tasks.register<Javadoc>("javadoc${variant.name.capitalize()}") { task ->
             task.group = JavaBasePlugin.DOCUMENTATION_GROUP
             task.description = "Generates Javadoc API documentation for ${variant.name} variant."
             task.dependsOn(variant.javaCompileProvider)
@@ -106,7 +103,7 @@ class AarPublishPlugin @Inject constructor(
             }
         }
 
-        return project.tasks.register("package${variant.name.capitalize()}Javadoc", Jar::class.java) { task ->
+        return project.tasks.register<Jar>("package${variant.name.capitalize()}Javadoc") { task ->
             task.group = BasePlugin.BUILD_GROUP
             task.description = "Assembles a jar archive containing the javadoc of ${variant.name} variant."
             task.dependsOn(javadoc)
@@ -116,7 +113,7 @@ class AarPublishPlugin @Inject constructor(
     }
 
     private fun registerSourcesTask(project: Project, variant: BaseVariant): TaskProvider<Jar> {
-        return project.tasks.register("package${variant.name.capitalize()}Sources", Jar::class.java) { task ->
+        return project.tasks.register<Jar>("package${variant.name.capitalize()}Sources") { task ->
             task.group = BasePlugin.BUILD_GROUP
             task.description = "Assembles a jar archive containing the sources of ${variant.name} variant."
             task.from(variant.getSourceFolders(SourceKind.JAVA))
@@ -137,8 +134,6 @@ class AarPublishPlugin @Inject constructor(
         addVariantsFromConfiguration(apiElements, AndroidConfigurationVariantMapping("compile"))
         addVariantsFromConfiguration(runtimeElements, AndroidConfigurationVariantMapping("runtime"))
     }
-
-    private inline fun <reified T : Named> ObjectFactory.named(name: String): T = named(T::class.java, name)
 
     private class AndroidConfigurationVariantMapping(private val scope: String) : Action<ConfigurationVariantDetails> {
         override fun execute(details: ConfigurationVariantDetails) {
