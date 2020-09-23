@@ -76,6 +76,11 @@ aarPublishing {
 }
 ```
 
+## Limitations
+
+- Dokka is not currently supported. It might work with some extra configuration.
+- Kotlin Multiplatform projects are not supported.
+
 ## License
 
 ```
